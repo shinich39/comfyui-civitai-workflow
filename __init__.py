@@ -6,12 +6,12 @@
 @description: Load workflow from civitai image.
 """
 
-from .libs import civitai
+from .py import civitai
 
 NODE_CLASS_MAPPINGS = {}
 
 NODE_DISPLAY_NAME_MAPPINGS = {}
 
-WEB_DIRECTORY = "./web/js"
+WEB_DIRECTORY = "./js"
 
-__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
+__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

@@ -1,7 +1,7 @@
 "use strict";
 
-import { app } from "../../../scripts/app.js";
-import { api } from "../../../scripts/api.js";
+import { app } from "../../scripts/app.js";
+import { api } from "../../scripts/api.js";
 
 const MIN_LABEL_LENGTH = 0;
 const CKPT_META_KEYS = {
