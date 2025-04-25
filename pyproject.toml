@@ -1,0 +1,14 @@
+[project]
+name = "comfyui-civitai-workflow"
+description = "Load workflow from civitai image."
+version = "1.0.0"
+license = { file = "LICENSE" }
+
+[project.urls]
+Repository = "https://github.com/shinich39/comfyui-civitai-workflow"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = "shinich39"
+DisplayName = "comfyui-civitai-workflow"
+Icon = ""
