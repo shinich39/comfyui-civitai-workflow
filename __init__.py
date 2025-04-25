@@ -8,8 +8,6 @@
 
 from .libs import civitai
 
-WEB_DIRECTORY = "./web/js"
-
 NODE_CLASS_MAPPINGS = {}
 
 NODE_DISPLAY_NAME_MAPPINGS = {}
