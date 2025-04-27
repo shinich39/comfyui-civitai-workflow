@@ -151,14 +151,22 @@ function openURL(url) {
 app.registerExtension({
 	name: `shinich39.CivitaiWorkflow`,
   setup() {
-    getCkptWorkflows()
-      .then(({ checkpoints }) => {
-        ckptMap = checkpoints || {};
 
-        const ckptCount = Object.keys(checkpoints).length;
+    // bugfix
+    // don't interrupt workflow loading
+    setTimeout(() => {
 
-        console.log(`[comfyui-civitai-workflow] Civitai checkpoints loaded successfully: ${ckptCount}`);
-      });
+      getCkptWorkflows()
+        .then(({ checkpoints }) => {
+          ckptMap = checkpoints || {};
+
+          const ckptCount = Object.keys(checkpoints).length;
+
+          console.log(`[comfyui-civitai-workflow] Civitai checkpoints loaded successfully: ${ckptCount}`);
+        });
+        
+    }, 1024);
+
   },
   async beforeRegisterNodeDef(nodeType, nodeData, app) {
 		const isCkpt = CKPT_TYPES.indexOf(nodeType.comfyClass || nodeData.name) > -1;
