@@ -27,6 +27,33 @@ const CKPT_TYPES = [
 
 let ckptMap = {};
 
+function createErrorNote(node, message) {
+
+  const createNote = function(str, x, y, width, height) {
+    const newNode = LiteGraph.createNode("Note");
+    newNode.pos = [x, y];
+    newNode.size = [width, height];
+    newNode.widgets[0].value = str;
+    app.canvas.graph.add(newNode, false);
+    app.canvas.selectNode(newNode);
+    return newNode;
+  }
+
+  const note = createNote(
+    message,
+    node.pos[0],
+    node.pos[1],
+    node.size[0],
+    node.size[1],
+  );
+
+  // red color
+  note.bgcolor = "#c61010";
+  note.color = "#da2424";
+
+  return note;
+}
+
 async function getCkptWorkflows() {
   const response = await api.fetchApi(`/shinich39/comfyui-civitai-workflow/load`, {
     method: "GET",
@@ -176,6 +203,8 @@ app.registerExtension({
         const r = origGetExtraMenuOptions ? origGetExtraMenuOptions.apply(this, arguments) : undefined;
 
         try {
+          const self = this;
+
           const ckptWidget = this.widgets.find((w) => w.name == "ckpt_name");
           if (!ckptWidget) {
             return r;
@@ -365,7 +394,12 @@ app.registerExtension({
               content: `#${workflowOptions.length + 1} (Comfy)`,
               callback: () => {
                 const json = JSON.parse(wf);
-                app.loadGraphData(json);
+                try {
+                  app.loadGraphData(json.workflow ? json.workflow : json);
+                } catch(err) {
+                  console.error(err);
+                  createErrorNote(self, err.message);
+                }
               }
             });
           }
@@ -374,7 +408,12 @@ app.registerExtension({
             workflowOptions.push({
               content: `#${workflowOptions.length + 1}`,
               callback: () => {
-                app.loadGraphData(createWorkflow(meta));
+                try {
+                  app.loadGraphData(createWorkflow(meta));
+                } catch(err) {
+                  console.error(err);
+                  createErrorNote(self, err.message);
+                }
               }
             });
           }
