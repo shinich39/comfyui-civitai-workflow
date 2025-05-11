@@ -12,6 +12,11 @@ from aiohttp import web
 
 __DIRNAME = os.path.dirname(os.path.abspath(__file__))
 
+CKPT_FILE_PAHTS = (
+  *[folder_paths.get_full_path("checkpoints", x) for x in folder_paths.get_filename_list("checkpoints")],
+  *[folder_paths.get_full_path("diffusion_models", x) for x in folder_paths.get_filename_list("diffusion_models")],
+)
+
 JSON_DIR_PATH = os.path.join(__DIRNAME, "..", "data")
 
 LATEST_DATA_PATH = os.path.join(JSON_DIR_PATH, "latest.json")
@@ -35,13 +40,12 @@ def get_model_hashes():
     with open(HASH_DATA_PATH, "r") as f:
       hashes = json.load(f)
 
-  for file_rel_path in folder_paths.get_filename_list("checkpoints"):
-    file_name = os.path.basename(file_rel_path)
-    file_path = folder_paths.get_full_path("checkpoints", file_rel_path)
+  for file_path in CKPT_FILE_PAHTS:
+    name = os.path.basename(file_path)
 
-    if file_name not in hashes:
-      print(f"[comfyui-civitai-workflow] {file_name} hash not found, wait for hash generation...")
-      hashes[file_name] = read_model_hash(file_path)
+    if name not in hashes:
+      print(f"[comfyui-civitai-workflow] {name} hash not found, wait for hash generation...")
+      hashes[name] = read_model_hash(file_path)
       update_model_hashes(hashes)
 
   return hashes
@@ -127,25 +131,26 @@ def get_ckpt_json():
 
     return []
   
+def filter_ckpts(ckpts, hashes):
+  result = {}
+  for file_path in CKPT_FILE_PAHTS:
+    name = os.path.basename(file_path)
+    hash = hashes[name]
+    for ckpt in ckpts:
+      if hash in ckpt["hashes"]:
+        result[name] = ckpt
+        break
+      elif name in ckpt["files"]:
+        result[name] = ckpt
+        break
+  return result
+
 @PromptServer.instance.routes.get("/shinich39/comfyui-civitai-workflow/load")
 async def _load(request):
   try:
     hashes = get_model_hashes()
     ckpts = get_ckpt_json()
-
-    # Filtering
-    filtered_ckpts = {}
-    for file_rel_path in folder_paths.get_filename_list("checkpoints"):
-      file_name = os.path.basename(file_rel_path)
-      hash = hashes[file_name]
-      name = file_rel_path
-      for ckpt in ckpts:
-        if hash in ckpt["hashes"]:
-          filtered_ckpts[name] = ckpt
-          break
-        elif name in ckpt["files"]:
-          filtered_ckpts[name] = ckpt
-          break
+    filtered_ckpts = filter_ckpts(ckpts, hashes)
 
     return web.json_response({
       "checkpoints": filtered_ckpts

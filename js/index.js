@@ -23,6 +23,8 @@ const CKPT_TYPES = [
   "CheckpointLoader|pysssss",
   "Checkpoint Loader", // WAS
   "CheckpointLoaderSimpleShared //Inspire",
+
+  "UNETLoader", // Load Diffusion Model
 ];
 
 let ckptMap = {};
@@ -205,12 +207,13 @@ app.registerExtension({
         try {
           const self = this;
 
-          const ckptWidget = this.widgets.find((w) => w.name == "ckpt_name");
+          const ckptWidget = this.widgets.find((w) => w.name == "ckpt_name" || w.name == "unet_name");
           if (!ckptWidget) {
             return r;
           }
   
-          const ckptName = ckptWidget.value;
+          const ckptRelPath = ckptWidget.value;
+          const ckptName = ckptRelPath.split(/[\\/]/).pop() || "";
           const ckpt = findCkpt(ckptName);
 
           const metadatas = ckpt?.metas || [];
@@ -365,7 +368,7 @@ app.registerExtension({
                   ],
                   properties: {},
                   widgets_values: [
-                    ckptName
+                    ckptRelPath
                   ]
                 }
               ],
