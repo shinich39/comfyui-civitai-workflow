@@ -2,7 +2,7 @@
 @author: shinich39
 @title: comfyui-civitai-workflow
 @nickname: comfyui-civitai-workflow
-@version: 1.0.0
+@version: 1.0.1
 @description: Load workflow from civitai image.
 """
 
