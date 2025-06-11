@@ -21,40 +21,48 @@ JSON_DIR_PATH = os.path.join(__DIRNAME, "..", "data")
 
 LATEST_DATA_PATH = os.path.join(JSON_DIR_PATH, "latest.json")
 CKPT_DATA_PATH = os.path.join(JSON_DIR_PATH, "checkpoints.json")
-HASH_DATA_PATH = os.path.join(JSON_DIR_PATH, "hashes.json")
 
 REPO_URL = "https://github.com/shinich39/civitai-model-json"
 LATEST_DATA_URL = "https://raw.githubusercontent.com/shinich39/civitai-model-json/refs/heads/main/dist/latest.json"
 CKPT_DATA_URL = "https://raw.githubusercontent.com/shinich39/civitai-model-json/refs/heads/main/dist/checkpoints.json.gz"
 
-def read_model_hash(file_path):
+def create_hash(file_path):
   with open(file_path, "rb") as f:
     return hashlib.sha256(f.read()).hexdigest().upper()
   
-def get_model_hashes():
+def read_hash(file_path):
+  with open(file_path, "r") as f:
+    return f.read()
+  
+def save_hash(file_path, hash):
+  with open(file_path, "w") as f:
+    f.write(hash)
+    f.close()
+  
+def get_hashes():
   hashes = {}
-  if os.path.exists(JSON_DIR_PATH) == False:
-    os.mkdir(JSON_DIR_PATH)
-
-  if os.path.exists(HASH_DATA_PATH) == True:
-    with open(HASH_DATA_PATH, "r") as f:
-      hashes = json.load(f)
-
+  
   for file_path in CKPT_FILE_PAHTS:
-    name = os.path.basename(file_path)
+    ckpt_filename = os.path.basename(file_path)
+    name, ext = os.path.splitext(ckpt_filename)
+    hash_filename = name + ".sha256"
+    hash_file_path = os.path.join(os.path.dirname(file_path), hash_filename)
+    
+    try:
+      hash = None
+      if os.path.exists(hash_file_path) == False:
+        print(f"[comfyui-civitai-workflow] {hash_filename} not found, wait for hash generation...")
+        hash = create_hash(file_path)
+        save_hash(hash_file_path, hash)
+      else:
+        hash = read_hash(hash_file_path)
 
-    if name not in hashes:
-      print(f"[comfyui-civitai-workflow] {name} hash not found, wait for hash generation...")
-      hashes[name] = read_model_hash(file_path)
-      update_model_hashes(hashes)
+      hashes[ckpt_filename] = hash
+    except:
+      pass
 
   return hashes
 
-def update_model_hashes(hashes):
-  with open(HASH_DATA_PATH, "w") as f:
-    f.write(json.dumps(hashes, indent=2))
-    f.close()
-  
 def get_remote_latest():
   try:
     res = requests.get(LATEST_DATA_URL)
@@ -71,7 +79,7 @@ def get_local_latest():
   except Exception:
     return None
 
-def get_ckpt_json():
+def get_ckpts():
   if os.path.exists(JSON_DIR_PATH) == False:
     os.mkdir(JSON_DIR_PATH)
 
@@ -148,8 +156,8 @@ def filter_ckpts(ckpts, hashes):
 @PromptServer.instance.routes.get("/shinich39/comfyui-civitai-workflow/load")
 async def _load(request):
   try:
-    hashes = get_model_hashes()
-    ckpts = get_ckpt_json()
+    hashes = get_hashes()
+    ckpts = get_ckpts()
     filtered_ckpts = filter_ckpts(ckpts, hashes)
 
     return web.json_response({
