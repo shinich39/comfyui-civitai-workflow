@@ -4,6 +4,7 @@ node.zip
 .ruff_cache/
 cache/
 node_modules/
+data/
 
 # custom
 
