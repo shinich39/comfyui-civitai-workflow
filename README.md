@@ -6,7 +6,9 @@ Load workflow from civitai image.
 
 If first run after install this extension or download new checkpoint, It may take a few minutes for hash generation.  
 
-Right Click the "Load Checkpoint" node > Workflows
+Right click the "Load Checkpoint" node \> Load civitai workflow \> Click the option
+
+Right click the "CLIP Text Encode (Prompt)" node \> Load value from civitai workflow \> Click the field name \(e.g. Positive prompt, Negative prompt...\) \> Click the option
 
 ## References
 

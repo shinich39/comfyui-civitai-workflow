@@ -27,6 +27,13 @@ const CKPT_TYPES = [
   "UNETLoader", // Load Diffusion Model
 ];
 
+const ENCODER_TYPES = [
+  "CLIPTextEncode",
+  "CLIPTextEncodeSDXLRefiner",
+  "CLIPTextEncodeFlux",
+  "CLIPTextEncodeSD3",
+];
+
 let ckptMap = {};
 
 function createErrorNote(node, message) {
@@ -77,6 +84,47 @@ function findCkpt(filename) {
     return;
   }
   return ckptMap[filename];
+}
+
+function findLinkedCkptNode(...nodes) {
+  if (nodes.length < 1) {
+    return;
+  }
+
+  const graph = app?.canvas?.graph;
+  if (!graph) {
+    return;
+  }
+
+  const inputNodes = [];
+
+  for (const node of nodes) {
+    const inputs = node?.inputs || [];
+    for (const input of inputs) {
+      if (typeof input.link !== "number") {
+        continue;
+      }
+
+      const link = graph.getLink(input.link);
+      if (!link) {
+        continue;
+      }
+
+      const n = graph.getNodeById(link.origin_id);
+      if (!n) {
+        continue;
+      }
+
+		  const isCkpt = CKPT_TYPES.indexOf(n.type) > -1;
+      if (isCkpt) {
+        return n;
+      }
+      
+      inputNodes.push(n);
+    }
+  }
+
+  return findLinkedCkptNode(...inputNodes);
 }
 
 function parseSampler(str) {
@@ -199,6 +247,7 @@ app.registerExtension({
   },
   async beforeRegisterNodeDef(nodeType, nodeData, app) {
 		const isCkpt = CKPT_TYPES.indexOf(nodeType.comfyClass || nodeData.name) > -1;
+		const isEncoder = ENCODER_TYPES.indexOf(nodeType.comfyClass || nodeData.name) > -1;
     if (isCkpt) {
       const origGetExtraMenuOptions = nodeType.prototype.getExtraMenuOptions;
       nodeType.prototype.getExtraMenuOptions = function (_, options) {
@@ -434,7 +483,7 @@ app.registerExtension({
                 openURL(`https://civitai.com/models/${ckpt.modelId}?modelVersionId=${ckpt.versionId}`);
               }
             }, {
-              content: "Workflows",
+              content: "Load civitai workflow",
               disabled: workflowOptions.length < 1,
               submenu: {
                 options: workflowOptions,
@@ -452,7 +501,88 @@ app.registerExtension({
         }
 
         return r;
-      } 
+      }
+    } else if (isEncoder) {
+      const origGetExtraMenuOptions = nodeType.prototype.getExtraMenuOptions;
+      nodeType.prototype.getExtraMenuOptions = function (_, options) {
+        const r = origGetExtraMenuOptions ? origGetExtraMenuOptions.apply(this, arguments) : undefined;
+
+        try {
+          const self = this;
+          const targetWidget = this.widgets.find((w) => w.name == "text" || w.name == "clip_l");
+
+          const ckptNode = findLinkedCkptNode(this);
+          if (!ckptNode) {
+            return r;
+          }
+
+          const ckptWidget = ckptNode.widgets.find((w) => w.name == "ckpt_name" || w.name == "unet_name");
+          if (!ckptWidget) {
+            return r;
+          }
+  
+          const ckptRelPath = ckptWidget.value;
+          const ckptName = ckptRelPath.split(/[\\/]/).pop() || "";
+          const ckpt = findCkpt(ckptName);
+
+          const metadatas = ckpt?.metas || [];
+          const workflows = ckpt?.workflows || [];
+
+          const workflowOptions = [];
+
+          for (const meta of metadatas) {
+            const valueOptions = [];
+
+            for (const [key, prefix] of Object.entries(CKPT_META_KEYS)) {
+              const value = meta[key];
+
+              if (!value) {
+                continue;
+              }
+
+              valueOptions.push({
+                content: prefix,
+                callback: () => {
+                  targetWidget.value = value;
+                  this?.setDirtyCanvas(true, true);
+                }
+              });
+            }
+
+            workflowOptions.push({
+              content: `#${workflowOptions.length + 1}`,
+              submenu: {
+                options: valueOptions,
+              },
+            });
+          }
+
+          let optionIndex = options.findIndex((o) => o?.content === "Inputs");
+          if (optionIndex < 0) {
+            optionIndex = 0;
+          }
+
+          let newOptions = [
+            {
+              content: "Load value from civitai workflow",
+              disabled: workflowOptions.length < 1,
+              submenu: {
+                options: workflowOptions,
+              },
+            },
+          ];
+          
+          options.splice(
+            optionIndex,
+            0,
+            ...newOptions
+          );
+        } catch(err) {
+          console.error(err);
+        }
+
+        return r;
+      }
     }
 	},
 });
