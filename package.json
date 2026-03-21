@@ -4,7 +4,7 @@
   "description": "Load workflow from civitai image.",
   "type": "module",
   "scripts": {
-    "commit": "node scripts/commit.js"
+    "deploy": "node scripts/deploy.js"
   },
   "repository": {
     "type": "git",
