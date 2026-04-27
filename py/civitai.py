@@ -23,8 +23,8 @@ LATEST_DATA_PATH = os.path.join(JSON_DIR_PATH, "latest.json")
 CKPT_DATA_PATH = os.path.join(JSON_DIR_PATH, "checkpoints.json")
 
 REPO_URL = "https://github.com/shinich39/civitai-model-json"
-LATEST_DATA_URL = "https://raw.githubusercontent.com/shinich39/civitai-model-json/refs/heads/main/dist/latest.json"
-CKPT_DATA_URL = "https://raw.githubusercontent.com/shinich39/civitai-model-json/refs/heads/main/dist/checkpoints.json.gz"
+LATEST_DATA_URL = "https://raw.githubusercontent.com/shinich39/civitai-model-json/refs/heads/main/data/latest.json"
+CKPT_DATA_URL = "https://raw.githubusercontent.com/shinich39/civitai-model-json/refs/heads/main/data/checkpoints.json.gz"
 
 def create_hash(file_path):
   with open(file_path, "rb") as f:
